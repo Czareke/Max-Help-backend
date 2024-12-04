@@ -46,8 +46,11 @@ app.use(cors({
 }));
 
 // Mount routes
+// Routes
+app.get("/", (req, res) => {
+  res.send("<h1>Wiki Api</h1><<a href='/api-docs'>Documentation</a>");
+});
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/catalogues', catalogueRoutes);
 app.use('/api/v1/data-feeds', dataFeedRoutes);
