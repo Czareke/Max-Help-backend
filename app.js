@@ -1,5 +1,4 @@
-// Required M
-// Import route files
+// Required Modules and Imports
 const authRoutes = require('./routes/authRoutes');
 const catalogueRoutes = require('./routes/catalogueRoutes');
 const dataFeedRoutes = require('./routes/dataFeedRoutes');
@@ -8,17 +7,21 @@ const productRoutes = require('./routes/productRoutes');
 const skuRoutes = require('./routes/skuRoutes');
 const feedRoutes = require('./routes/feedRoutes');
 const inventoryRoutes = require('./routes/InventoryRoutes');
-const userRoutes=require('./routes/userRoutes')
-const AppError=require('./utils/appError')
+const userRoutes = require('./routes/userRoutes');
+const AppError = require('./utils/appError');
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
-// dotenv.config(); // Load environment variables from .env
 const morgan = require('morgan');
-const { Module } = require('module');
+const cloudinary = require('cloudinary').v2;
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const swaggerDocument = YAML.load('./swagger.yaml');
+const globalErrorHandler = require('./controllers/errorController');
 
-const cloudinary = require('cloudinary').v2; // Import Cloudinary
+// dotenv.config(); // Uncomment if using .env file
+dotenv.config(); // Load environment variables from .env
 
 // Configure Cloudinary
 cloudinary.config({
@@ -26,31 +29,34 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-const app = express();
-// Swagger for API documentation
-const swaggerUi = require('swagger-ui-express');
-const YAML = require('yamljs');
-const swaggerDocument = YAML.load('./swagger.yaml');
 
-const globalErrorHandler = require('./controllers/errorController');
+const app = express();
 
 // Middleware
 app.use(morgan('dev'));
 app.use(express.json());
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded payload
-app.use(cors({
-  origin: 'http://localhost:3000', // Replace with your frontend's origin
-  methods: ['GET', 'POST', 'PATCH', 'DELETE'], // Allowed methods
-  credentials: true, // Allow cookies if needed
-}));
+app.use(express.urlencoded({ extended: true }));
+app.use(
+  cors({
+    origin: 'http://localhost:3000', // Replace with your frontend's origin
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'], // Allowed methods
+    credentials: true, // Allow cookies if needed
+  })
+);
 
-// Mount routes
-// Routes
-app.get("/", (req, res) => {
-  res.send("<h1>Wiki Api</h1><<a href='/api-docs'>Documentation</a>");
+// Root Route
+app.get('/', (req, res) => {
+  res.send(`
+    <h1>Welcome to the Max Help API!</h1>
+    <p>Explore the <a href="/api-docs">API Documentation</a></p>
+  `);
 });
+
+// Swagger for API documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+// Mount Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/catalogues', catalogueRoutes);
 app.use('/api/v1/data-feeds', dataFeedRoutes);
@@ -59,7 +65,8 @@ app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/skus', skuRoutes);
 app.use('/api/v1/feeds', feedRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
-app.use('/api/v1/users',userRoutes)
+app.use('/api/v1/users', userRoutes);
+
 // Catch-all for undefined routes
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
